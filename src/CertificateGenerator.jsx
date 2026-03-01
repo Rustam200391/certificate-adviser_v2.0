@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import QRCode from "qrcode";
+import logoImg from "./assets/logo.jpg"; // путь к логотипу клиники
 import "./CertificateGenerator.css";
 
-export default function CertificateGenerator() {
+function CertificateGenerator() {
   const canvasRef = useRef(null);
-
   const [formData, setFormData] = useState({
     patientFirstName: "",
     patientLastName: "",
@@ -21,9 +21,10 @@ export default function CertificateGenerator() {
 
   const [imageObj, setImageObj] = useState(null);
   const [qrImage, setQrImage] = useState(null);
-  const [qrPosition, setQrPosition] = useState({ x: 50, y: 50 });
+  const [qrPosition, setQrPosition] = useState({ x: 100, y: 100 });
   const [dragging, setDragging] = useState(false);
-  const qrSize = 140;
+
+  const qrSize = 150;
 
   const specializations = [
     "Therapist",
@@ -42,6 +43,7 @@ export default function CertificateGenerator() {
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
+
     if (name === "certificateFile") {
       const file = files[0];
       setFormData({ ...formData, certificateFile: file });
@@ -50,18 +52,16 @@ export default function CertificateGenerator() {
         img.src = URL.createObjectURL(file);
         img.onload = () => setImageObj(img);
       }
-    } else if (name === "entryDate") {
-      const startDate = new Date(value);
-      const expiryDate = new Date(startDate);
-      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-      const expiryString = expiryDate.toISOString().split("T")[0];
-      setFormData({
-        ...formData,
-        entryDate: value,
-        certificateExpiryDate: expiryString,
-      });
     } else {
       setFormData({ ...formData, [name]: value });
+
+      if (name === "entryDate") {
+        // Автоматическая дата окончания +1 год
+        const issueDate = new Date(value);
+        issueDate.setFullYear(issueDate.getFullYear() + 1);
+        const expiryDate = issueDate.toISOString().split("T")[0];
+        setFormData((prev) => ({ ...prev, certificateExpiryDate: expiryDate }));
+      }
     }
   };
 
@@ -73,29 +73,38 @@ export default function CertificateGenerator() {
       entryDate: formData.entryDate,
       expiry: formData.certificateExpiryDate,
     });
+
     const qrUrl = await QRCode.toDataURL(qrData, { width: qrSize });
     const img = new Image();
     img.src = qrUrl;
     img.onload = () => setQrImage(img);
   };
 
-  useEffect(() => {
+  const drawCanvas = () => {
     if (!imageObj) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+
     canvas.width = imageObj.width;
     canvas.height = imageObj.height;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(imageObj, 0, 0);
-    if (qrImage)
+    ctx.drawImage(imageObj, 0, 0); // Только сертификат
+
+    if (qrImage) {
       ctx.drawImage(qrImage, qrPosition.x, qrPosition.y, qrSize, qrSize);
+    }
+  };
+
+  useEffect(() => {
+    drawCanvas();
   }, [imageObj, qrImage, qrPosition]);
 
   const handleMouseDown = (e) => {
-    if (!qrImage) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
     if (
       x >= qrPosition.x &&
       x <= qrPosition.x + qrSize &&
@@ -105,6 +114,7 @@ export default function CertificateGenerator() {
       setDragging(true);
     }
   };
+
   const handleMouseMove = (e) => {
     if (!dragging) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -112,6 +122,7 @@ export default function CertificateGenerator() {
     const y = e.clientY - rect.top;
     setQrPosition({ x: x - qrSize / 2, y: y - qrSize / 2 });
   };
+
   const handleMouseUp = () => setDragging(false);
 
   const downloadImage = () => {
@@ -121,28 +132,19 @@ export default function CertificateGenerator() {
     link.click();
   };
 
-  // Новая функция: подготовка данных для сохранения в базу
   const saveToDatabase = () => {
-    if (!canvasRef.current) return;
-
-    const certificateDataURL = canvasRef.current.toDataURL("image/png");
-
-    const payload = {
-      ...formData,
-      certificateImage: certificateDataURL,
-    };
-
-    // Пока выводим в консоль, позже отправим на сервер
-    console.log("Data to save:", payload);
-    alert(
-      "Form data + certificate image prepared for database! Check console.",
-    );
+    // Заглушка: здесь позже будет отправка на сервер
+    console.log("Saving to database:", formData);
+    alert("Data and certificate saved to database (mock)!");
   };
 
   return (
     <div className="app-wrapper">
       <div className="generator-card">
-        <h1>Medical Certificate Generator</h1>
+        {logoImg && (
+          <img src={logoImg} alt="Clinic Logo" className="clinic-logo" />
+        )}
+        <h1 className="main-title">Medical Certificate Generator</h1>
 
         <div className="form-grid">
           <div className="form-section">
@@ -210,6 +212,7 @@ export default function CertificateGenerator() {
                 <option key={i}>{s}</option>
               ))}
             </select>
+
             <label>Certificate Issue Date</label>
             <input
               type="date"
@@ -260,3 +263,5 @@ export default function CertificateGenerator() {
     </div>
   );
 }
+
+export default CertificateGenerator;
