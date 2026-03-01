@@ -1,0 +1,95 @@
+body {
+  margin: 0;
+  background: #f0f2f5;
+  font-family: sans-serif;
+}
+.app-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+}
+.generator-card {
+  width: 100%;
+  max-width: 1200px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+.generator-card h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #1e293b;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+input,
+select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+input[readonly] {
+  background: #e2e8f0;
+  cursor: not-allowed;
+}
+label {
+  font-size: 13px;
+  color: #475569;
+}
+.canvas-wrapper {
+  text-align: center;
+  margin-top: 20px;
+}
+canvas {
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  max-width: 100%;
+  cursor: grab;
+}
+canvas:active {
+  cursor: grabbing;
+}
+.button-group {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #3b82f6);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
