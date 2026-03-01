@@ -142,7 +142,9 @@ function CertificateGenerator() {
     <div className="app-wrapper">
       <div className="generator-card">
         {logoImg && (
-          <img src={logoImg} alt="Clinic Logo" className="clinic-logo" />
+          <a href="https://www.internationalsos.com/" alt="sos">
+            <img src={logoImg} alt="Clinic Logo" className="clinic-logo" />
+          </a>
         )}
         <h1 className="main-title">Medical Certificate Generator</h1>
 
@@ -167,6 +169,7 @@ function CertificateGenerator() {
             <input
               type="date"
               name="patientBirthDate"
+              placeholder="MM/DD/YYYY"
               value={formData.patientBirthDate}
               onChange={handleInputChange}
             />
