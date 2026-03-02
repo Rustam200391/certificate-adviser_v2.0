@@ -1,36 +1,65 @@
 .app-wrapper {
   padding: 20px;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #eef2ff, #f5f5f5);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
 }
 
+/* Плавное появление карточки */
 .generator-card {
   background: white;
   padding: 25px 30px;
-  border-radius: 15px;
+  border-radius: 18px;
   max-width: 1000px;
   width: 100%;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: fadeSlide 0.7s ease forwards;
+  transition: 0.4s;
+}
+
+.generator-card:hover {
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.25);
+  transform: translateY(-3px);
+}
+
+/* Анимация появления */
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .clinic-logo {
   width: 120px;
   margin-bottom: 15px;
+  transition: 0.4s;
+}
+
+.clinic-logo:hover {
+  transform: scale(1.05) rotate(-2deg);
 }
 
 .main-title {
   text-align: center;
   margin-bottom: 30px;
   font-size: 2em;
+  background: linear-gradient(135deg, #6366f1, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
+/* Сетка */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -39,37 +68,63 @@
   margin-bottom: 30px;
 }
 
+/* Блок формы */
 .form-section {
   display: flex;
   flex-direction: column;
+  animation: fadeSlide 0.6s ease forwards;
 }
 
+/* Поля */
 .form-section input,
 .form-section select {
   width: 100%;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
   box-sizing: border-box;
+  transition: 0.3s ease;
+  background: #fafafa;
+}
+
+.form-section input:focus,
+.form-section select:focus {
+  outline: none;
+  border-color: #6366f1;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
 }
 
 label {
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  transition: 0.3s;
 }
 
+/* Canvas */
 .canvas-wrapper {
   text-align: center;
   margin-top: 20px;
   width: 100%;
-}
-canvas {
-  border: 1px solid #ccc;
-  max-width: 100%;
-  cursor: move;
+  animation: fadeSlide 0.8s ease forwards;
 }
 
+canvas {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  max-width: 100%;
+  cursor: move;
+  transition: 0.3s ease;
+}
+
+canvas:hover {
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.25);
+  transform: scale(1.01);
+}
+
+/* Кнопки */
 .button-group {
   margin-top: 20px;
   display: flex;
@@ -79,21 +134,51 @@ canvas {
 }
 
 button {
-  padding: 10px 24px;
+  padding: 12px 26px;
   border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #6366f1, #3b82f6);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #3b82f6, #6366f1);
+  background-size: 200% 200%;
   color: white;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
+/* Плавное движение градиента */
 button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  background-position: right center;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4);
 }
 
+/* Эффект нажатия */
+button:active {
+  transform: scale(0.97);
+}
+
+/* Ripple эффект */
+button::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transition: 0.4s;
+  transform: translate(-50%, -50%);
+}
+
+button:active::after {
+  width: 200px;
+  height: 200px;
+  top: 50%;
+  left: 50%;
+}
+
+/* Адаптив */
 @media (max-width: 900px) {
   .form-grid {
     grid-template-columns: 1fr;
