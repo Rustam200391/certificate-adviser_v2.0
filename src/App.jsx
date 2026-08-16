@@ -1,31 +1,20 @@
-import React, { useState } from "react";
-import CertificateGenerator from "./CertificateGenerator.jsx";
-import SavedCertificates from "./SavedCertificates.jsx";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import CertificateGenerator from "./CertificateGenerator";
+import CertificateView from "./CertificateView";
 
 function App() {
-  const [viewSaved, setViewSaved] = useState(false);
-
   return (
-    <div>
-      <button
-        onClick={() => setViewSaved(!viewSaved)}
-        style={{
-          margin: "20px",
-          padding: "10px 20px",
-          borderRadius: "8px",
-          background: "#3b82f6",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        {viewSaved
-          ? "Вернуться к генератору"
-          : "Посмотреть сохранённые сертификаты"}
-      </button>
+    <BrowserRouter>
+      <Routes>
+        {/* Главная страница */}
+        <Route path="/" element={<CertificateGenerator />} />
 
-      {viewSaved ? <SavedCertificates /> : <CertificateGenerator />}
-    </div>
+        {/* Страница конкретного сертификата */}
+        <Route path="/certificate/:id" element={<CertificateView />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
