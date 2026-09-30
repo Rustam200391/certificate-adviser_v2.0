@@ -6,29 +6,75 @@ function CertificateView() {
 
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
-    // =====================================================
-    // 🟡 MOCK DATABASE
-    // =====================================================
-    //
-    // ПОКА читаем сертификат из localStorage.
-    //
-    // 🔴 BACKEND API
-    // Позже этот блок будет заменён на:
-    //
-    // fetch(`BACKEND_API_URL/api/certificates/${id}`)
-    //
-    // =====================================================
+    let cancelled = false;
 
-    const saved = JSON.parse(localStorage.getItem("certificates") || "[]");
+    const loadCertificate = async () => {
+      setLoading(true);
+      setLoadError(null);
+      setCertificate(null);
 
-    const foundCertificate = saved.find(
-      (cert) => String(cert.id) === String(id),
-    );
+      const apiUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/certificates/${encodeURIComponent(id)}`;
 
-    setCertificate(foundCertificate || null);
-    setLoading(false);
+      try {
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          const error = new Error(`Certificate request failed (HTTP ${response.status}).`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const savedCertificate = await response.json();
+        const certificateData = savedCertificate.certificateData;
+        const normalizedCertificate = {
+          ...savedCertificate,
+          certificateData:
+            typeof certificateData === "string" &&
+            certificateData.length > 0 &&
+            !certificateData.startsWith("data:")
+              ? `data:image/png;base64,${certificateData}`
+              : certificateData,
+        };
+
+        if (!cancelled) {
+          setCertificate(normalizedCertificate);
+        }
+      } catch (error) {
+        let localCertificate = null;
+
+        try {
+          const saved = JSON.parse(localStorage.getItem("certificates") || "[]");
+          const localCertificates = Array.isArray(saved) ? saved : [];
+          localCertificate = localCertificates.find(
+            (cert) =>
+              String(cert.id) === String(id) ||
+              String(cert.backendId) === String(id),
+          );
+        } catch (storageError) {
+          console.error("Could not read certificates from localStorage:", storageError);
+        }
+
+        if (!cancelled) {
+          setCertificate(localCertificate || null);
+          if (!localCertificate && error.status !== 404) {
+            setLoadError("Could not load this certificate. Please try again later.");
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCertificate();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // =====================================================
@@ -53,10 +99,14 @@ function CertificateView() {
     return (
       <div style={styles.page}>
         <div style={styles.card}>
-          <h2>Certificate not found</h2>
+          <h2>{loadError ? "Unable to load certificate" : "Certificate not found"}</h2>
 
           <p>
-            Certificate with ID <strong>{id}</strong> does not exist.
+            {loadError || (
+              <>
+                Certificate with ID <strong>{id}</strong> does not exist.
+              </>
+            )}
           </p>
         </div>
       </div>

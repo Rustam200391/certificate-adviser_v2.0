@@ -5,6 +5,25 @@ import QRCode from "qrcode";
 import logoImg from "./assets/logo.jpg";
 import "./CertificateGenerator.css";
 
+const getLocalCertificates = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem("certificates") || "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+};
+
+const mapApiCertificate = (certificate) => ({
+  ...certificate,
+  certificateData:
+    typeof certificate.certificateData === "string" &&
+    certificate.certificateData.length > 0 &&
+    !certificate.certificateData.startsWith("data:")
+      ? `data:image/png;base64,${certificate.certificateData}`
+      : certificate.certificateData,
+});
+
 function CertificateGenerator() {
   const canvasRef = useRef(null);
 
@@ -65,13 +84,45 @@ function CertificateGenerator() {
   ];
 
   // =========================================================
-  // LOAD MOCK DATABASE
+  // LOAD SAVED CERTIFICATES
   // =========================================================
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("certificates") || "[]");
+    let cancelled = false;
 
-    setCertificates(saved);
+    const loadCertificates = async () => {
+      const apiUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/certificates`;
+
+      try {
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          throw new Error(`Certificate list request failed (HTTP ${response.status}).`);
+        }
+
+        const saved = await response.json();
+
+        if (!Array.isArray(saved)) {
+          throw new Error("Certificate list response is invalid.");
+        }
+
+        if (!cancelled) {
+          setCertificates(saved.map(mapApiCertificate));
+        }
+      } catch (error) {
+        console.error("Could not load certificates from the API:", error);
+
+        if (!cancelled) {
+          setCertificates(getLocalCertificates());
+        }
+      }
+    };
+
+    loadCertificates();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // =========================================================
