@@ -278,162 +278,111 @@ function CertificateGenerator() {
 
   const saveToDatabase = async () => {
     if (!imageObj) {
-      alert("Сначала загрузите сертификат!");
+      alert("Please upload a certificate image first.");
       return;
     }
 
     if (!qrImage) {
-      alert("Сначала сгенерируйте QR!");
+      alert("Please generate the QR code first.");
       return;
     }
 
-    // =======================================================
-    // UNIQUE CERTIFICATE ID
-    // =======================================================
-
-    const id = Date.now().toString();
-
-    // =======================================================
-    // 🔴 BACKEND API — CERTIFICATE URL
-    // =======================================================
-    //
-    // ПОКА:
-    // localhost используется для тестирования.
-    //
-    // ПОЗЖЕ БЕКЕНДЕР/DEPLOYMENT ДАСТ НАСТОЯЩИЙ DOMAIN.
-    //
-    // Например:
-    //
-    // https://clinic.az/certificate/${id}
-    //
-    // =======================================================
-
-    const certificateUrl = `${window.location.origin}/certificate/${id}`;
-
-    // =======================================================
-    // 🔴 BACKEND API — ENDPOINT ДЛЯ СОХРАНЕНИЯ
-    // =======================================================
-    //
-    // ЗДЕСЬ ПОЗЖЕ БУДЕТ:
-    //
-    // POST /api/certificates
-    //
-    // Например:
-    //
-    // fetch("https://api.clinic.az/api/certificates")
-    //
-    // Сейчас fetch НЕ НУЖЕН.
-    // Работаем через localStorage.
-    //
-    // =======================================================
-
-    // =======================================================
-    // GENERATE QR WITH CERTIFICATE URL
-    // =======================================================
+    const temporaryId = Date.now().toString();
+    const certificateUrl = `${window.location.origin}/certificate/${temporaryId}`;
 
     try {
       await generateQR(certificateUrl);
+
+      const qrDataUrl = await QRCode.toDataURL(certificateUrl, {
+        width: qrSize,
+        margin: 2,
+      });
+
+      if (!canvasRef.current) {
+        throw new Error("The certificate image is not ready. Please try again.");
+      }
+
+      const finalCanvas = document.createElement("canvas");
+      finalCanvas.width = imageObj.width;
+      finalCanvas.height = imageObj.height;
+      const finalContext = finalCanvas.getContext("2d");
+      finalContext.drawImage(imageObj, 0, 0);
+      const qrImageForSave = new Image();
+      qrImageForSave.src = qrDataUrl;
+      await qrImageForSave.decode();
+      finalContext.drawImage(qrImageForSave, qrPosition.x, qrPosition.y, qrSize, qrSize);
+
+      const certificateData = finalCanvas.toDataURL("image/png");
+      const imageBlob = await (await fetch(certificateData)).blob();
+      const imageFile = new File([imageBlob], "certificate.png", { type: "image/png" });
+
+      const certificate = {
+        id: temporaryId,
+        patientFirstName: formData.patientFirstName,
+        patientLastName: formData.patientLastName,
+        patientBirthDate: formData.patientBirthDate,
+        documentSeries: formData.documentSeries,
+        documentNumber: formData.documentNumber,
+        doctorFirstName: formData.doctorFirstName,
+        doctorLastName: formData.doctorLastName,
+        doctorSpecialization: formData.doctorSpecialization,
+        entryDate: formData.entryDate,
+        expiryDate: formData.certificateExpiryDate,
+        qrUrl: certificateUrl,
+        qrData: qrDataUrl,
+        certificateData,
+        createdAt: new Date().toISOString(),
+      };
+
+      const dto = {
+        patientFirstName: formData.patientFirstName,
+        patientLastName: formData.patientLastName,
+        doctorFirstName: formData.doctorFirstName,
+        doctorLastName: formData.doctorLastName,
+        doctorSpecialization: formData.doctorSpecialization,
+      };
+      const body = new FormData();
+      body.append("dto", JSON.stringify(dto));
+      body.append("file", imageFile);
+
+      const apiUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/certificates`;
+      let response;
+      try {
+        response = await fetch(apiUrl, { method: "POST", body });
+      } catch {
+        throw new Error("Cannot reach the certificate server. Check that the backend is running and try again.");
+      }
+
+      if (!response.ok) {
+        const responseText = await response.text();
+        let message = `Certificate save failed (HTTP ${response.status}).`;
+        try {
+          const errorPayload = JSON.parse(responseText);
+          message = errorPayload.message || errorPayload.error || message;
+        } catch {
+          if (responseText) message = responseText;
+        }
+        throw new Error(message);
+      }
+
+      const savedCertificate = await response.json();
+      certificate.backendId = savedCertificate.id;
+      certificate.patientFirstName = savedCertificate.patientFirstName;
+      certificate.patientLastName = savedCertificate.patientLastName;
+      certificate.doctorFirstName = savedCertificate.doctorFirstName;
+      certificate.doctorLastName = savedCertificate.doctorLastName;
+      certificate.doctorSpecialization = savedCertificate.doctorSpecialization;
+
+      const saved = JSON.parse(localStorage.getItem("certificates") || "[]");
+      saved.push(certificate);
+      localStorage.setItem("certificates", JSON.stringify(saved));
+      setCertificates(saved);
+      alert("Certificate successfully saved to the database!");
     } catch (error) {
-      console.error("QR generation failed:", error);
-
-      return;
+      console.error("Certificate save failed:", error);
+      alert(error.message || "Could not save the certificate. Please try again.");
     }
-
-    // -------------------------------------------------------
-    // IMPORTANT:
-    // React state qrImage обновляется не мгновенно.
-    // Поэтому здесь повторно генерируем QR напрямую.
-    // -------------------------------------------------------
-
-    const qrDataUrl = await QRCode.toDataURL(certificateUrl, {
-      width: qrSize,
-      margin: 2,
-    });
-
-    // -------------------------------------------------------
-    // Create final image with QR
-    // -------------------------------------------------------
-
-    const canvas = canvasRef.current;
-
-    const certificateData = canvas.toDataURL("image/png");
-
-    const certificate = {
-      id,
-
-      // Patient
-      patientFirstName: formData.patientFirstName,
-
-      patientLastName: formData.patientLastName,
-
-      patientBirthDate: formData.patientBirthDate,
-
-      documentSeries: formData.documentSeries,
-
-      documentNumber: formData.documentNumber,
-
-      // Doctor
-      doctorFirstName: formData.doctorFirstName,
-
-      doctorLastName: formData.doctorLastName,
-
-      doctorSpecialization: formData.doctorSpecialization,
-
-      // Certificate
-      entryDate: formData.entryDate,
-
-      expiryDate: formData.certificateExpiryDate,
-
-      // QR
-      qrUrl: certificateUrl,
-
-      qrData: qrDataUrl,
-
-      // Final certificate image
-      certificateData,
-
-      // Created timestamp
-      createdAt: new Date().toISOString(),
-    };
-
-    // =======================================================
-    // 🟡 MOCK DATABASE
-    // =======================================================
-    //
-    // ЭТО ВРЕМЕННАЯ ИМИТАЦИЯ DATABASE.
-    //
-    // КОГДА ПРИДЁТ БЕКЕНДЕР:
-    //
-    // ВОТ ЭТОТ БЛОК БУДЕТ ЗАМЕНЁН НА:
-    //
-    // const response = await fetch(
-    //   "BACKEND_API_URL/api/certificates",
-    //   {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(certificate),
-    //   }
-    // );
-    //
-    // =======================================================
-
-    const saved = JSON.parse(localStorage.getItem("certificates") || "[]");
-
-    saved.push(certificate);
-
-    localStorage.setItem("certificates", JSON.stringify(saved));
-
-    setCertificates(saved);
-
-    // =======================================================
-    // SUCCESS
-    // =======================================================
-
-    alert("Certificate successfully saved!");
   };
-
   // =========================================================
   // DELETE CERTIFICATE
   // =========================================================
