@@ -417,17 +417,21 @@ function CertificateGenerator() {
       }
 
       const savedCertificate = await response.json();
-      certificate.backendId = savedCertificate.id;
-      certificate.patientFirstName = savedCertificate.patientFirstName;
-      certificate.patientLastName = savedCertificate.patientLastName;
-      certificate.doctorFirstName = savedCertificate.doctorFirstName;
-      certificate.doctorLastName = savedCertificate.doctorLastName;
-      certificate.doctorSpecialization = savedCertificate.doctorSpecialization;
+      if (savedCertificate.id == null) {
+        throw new Error("The certificate server did not return an ID.");
+      }
 
-      const saved = JSON.parse(localStorage.getItem("certificates") || "[]");
-      saved.push(certificate);
-      localStorage.setItem("certificates", JSON.stringify(saved));
-      setCertificates(saved);
+      const listResponse = await fetch(apiUrl);
+      if (!listResponse.ok) {
+        throw new Error(`Certificate list request failed (HTTP ${listResponse.status}).`);
+      }
+
+      const savedCertificates = await listResponse.json();
+      if (!Array.isArray(savedCertificates)) {
+        throw new Error("Certificate list response is invalid.");
+      }
+
+      setCertificates(savedCertificates.map(mapApiCertificate));
       alert("Certificate successfully saved to the database!");
     } catch (error) {
       console.error("Certificate save failed:", error);
