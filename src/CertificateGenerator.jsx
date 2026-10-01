@@ -517,11 +517,22 @@ function CertificateGenerator() {
   // SEARCH
   // =========================================================
 
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const filteredCertificates = certificates.filter((cert) => {
-    const fullName =
-      `${cert.patientFirstName} ${cert.patientLastName}`.toLowerCase();
+    const searchableValues = [
+      cert.patientFirstName,
+      cert.patientLastName,
+      cert.doctorFirstName,
+      cert.doctorLastName,
+      cert.doctorSpecialization,
+    ];
 
-    return fullName.includes(searchTerm.toLowerCase());
+    return (
+      !normalizedSearchTerm ||
+      searchableValues.some((value) =>
+        String(value || "").toLowerCase().includes(normalizedSearchTerm),
+      )
+    );
   });
 
   // =========================================================
@@ -747,7 +758,10 @@ function CertificateGenerator() {
                 gap: "20px",
               }}
             >
-              {filteredCertificates.map((cert) => (
+              {normalizedSearchTerm && filteredCertificates.length === 0 ? (
+                <p role="status">Ничего не найдено</p>
+              ) : (
+                filteredCertificates.map((cert) => (
                 <div
                   key={cert.id}
                   style={{
@@ -826,7 +840,8 @@ function CertificateGenerator() {
                     View Certificate
                   </a>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}
