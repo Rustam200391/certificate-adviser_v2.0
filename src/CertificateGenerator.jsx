@@ -139,6 +139,9 @@ function CertificateGenerator() {
     if (name === "certificateFile") {
       const file = files?.[0];
 
+      setImageObj(null);
+      setQrImage(null);
+
       setFormData((prev) => ({
         ...prev,
         certificateFile: file || null,
@@ -328,8 +331,59 @@ function CertificateGenerator() {
   // =========================================================
 
   const saveToDatabase = async () => {
-    if (!imageObj) {
+    const dto = {
+      patientFirstName: formData.patientFirstName.trim(),
+      patientLastName: formData.patientLastName.trim(),
+      doctorFirstName: formData.doctorFirstName.trim(),
+      doctorLastName: formData.doctorLastName.trim(),
+      doctorSpecialization: formData.doctorSpecialization.trim(),
+    };
+
+    const requiredFields = [
+      ["Patient first name", dto.patientFirstName],
+      ["Patient last name", dto.patientLastName],
+      ["Doctor first name", dto.doctorFirstName],
+      ["Doctor last name", dto.doctorLastName],
+    ];
+
+    const missingField = requiredFields.find(([, value]) => !value);
+    if (missingField) {
+      alert(`${missingField[0]} is required.`);
+      return;
+    }
+
+    const maxLengths = [
+      ["Patient first name", dto.patientFirstName, 100],
+      ["Patient last name", dto.patientLastName, 100],
+      ["Doctor first name", dto.doctorFirstName, 100],
+      ["Doctor last name", dto.doctorLastName, 100],
+      ["Doctor specialization", dto.doctorSpecialization, 150],
+    ];
+
+    const tooLongField = maxLengths.find(([, value, maxLength]) => value.length > maxLength);
+    if (tooLongField) {
+      alert(`${tooLongField[0]} must be ${tooLongField[2]} characters or fewer.`);
+      return;
+    }
+
+    const certificateFile = formData.certificateFile;
+    if (!certificateFile) {
       alert("Please upload a certificate image first.");
+      return;
+    }
+
+    if (!certificateFile.type.startsWith("image/")) {
+      alert("The selected file must be an image.");
+      return;
+    }
+
+    if (certificateFile.size > 50 * 1024 * 1024) {
+      alert("The certificate image must be 50 MB or smaller.");
+      return;
+    }
+
+    if (!imageObj) {
+      alert("The selected image could not be loaded. Please choose a valid image file.");
       return;
     }
 
@@ -385,13 +439,6 @@ function CertificateGenerator() {
         createdAt: new Date().toISOString(),
       };
 
-      const dto = {
-        patientFirstName: formData.patientFirstName,
-        patientLastName: formData.patientLastName,
-        doctorFirstName: formData.doctorFirstName,
-        doctorLastName: formData.doctorLastName,
-        doctorSpecialization: formData.doctorSpecialization,
-      };
       const body = new FormData();
       body.append("dto", JSON.stringify(dto));
       body.append("file", imageFile);
