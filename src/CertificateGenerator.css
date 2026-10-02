@@ -111,6 +111,67 @@ label {
   animation: fadeSlide 0.8s ease forwards;
 }
 
+.pdf-preview-section {
+  margin: 12px 0 18px;
+  text-align: center;
+}
+
+.pdf-preview-page {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin: 8px auto;
+  line-height: 0;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  background: white;
+}
+
+.pdf-preview-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  border: 0;
+  border-radius: 0;
+}
+
+.pdf-preview-canvas:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.qr-placement-overlay {
+  position: absolute;
+  z-index: 1;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border: 3px solid #2563eb;
+  background-color: white;
+  background-image:
+    linear-gradient(90deg, #111 25%, transparent 25%, transparent 50%, #111 50%, #111 75%, transparent 75%),
+    linear-gradient(#111 25%, transparent 25%, transparent 50%, #111 50%, #111 75%, transparent 75%);
+  background-size: 19px 19px;
+  color: #2563eb;
+  cursor: grab;
+  line-height: 1;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+
+.qr-placement-overlay span {
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.qr-placement-overlay.is-dragging {
+  cursor: grabbing;
+}
+
 canvas {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
